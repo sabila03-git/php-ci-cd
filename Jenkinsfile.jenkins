@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Clone Repository') {
+            steps {
+                git 'https://github.com/sabila03-git/php-ci-cd.git'
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'composer install'
+            }
+        }
+
+        stage('Run Unit Test') {
+            steps {
+                sh './vendor/bin/phpunit tests'
+            }
+
+            post {
+                success {
+                    echo 'Unit Test Berhasil'
+                }
+
+                failure {
+                    echo 'Unit Test Gagal'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t php-ci-cd .'
+            }
+        }
+
+        stage('Deploy Docker Container') {
+            steps {
+                sh '''
+                docker rm -f php-app || true
+                docker run -d --name php-app -p 8000:8000 php-ci-cd
+                '''
+            }
+        }
+    }
+    }
+    
